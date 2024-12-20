@@ -14,12 +14,12 @@ function sc_add_admin_menu() {
 function sc_admin_page() {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         update_option('sc_cache_enabled', isset($_POST['cache_enabled']) ? 1 : 0);
-        update_option('sc_cache_exceptions', array_filter(explode(',', sanitize_text_field($_POST['exceptions']))));
+        update_option('sc_cache_exceptions', array_map('sanitize_text_field', $_POST['exceptions']));
         update_option('sc_cache_durations', sc_parse_durations($_POST['durations']));
     }
 
     $enabled = get_option('sc_cache_enabled');
-    $exceptions = implode(',', get_option('sc_cache_exceptions', []));
+    $exceptions = get_option('sc_cache_exceptions', []);
     $durations = sc_format_durations(get_option('sc_cache_durations', []));
     ?>
     <div class="wrap">
@@ -31,12 +31,12 @@ function sc_admin_page() {
             </label>
             <br><br>
             <label>
-                Exceptions:
-                <input type="text" name="exceptions" value="<?php echo esc_attr($exceptions); ?>">
+                Exceptions (one per line):
+                <textarea name="exceptions" rows="5" cols="50"><?php echo esc_textarea(implode("\n", $exceptions)); ?></textarea>
             </label>
             <br><br>
             <label>
-                Cache Durations:
+                Cache Durations (e.g., checkout: 0):
                 <input type="text" name="durations" value="<?php echo esc_attr($durations); ?>">
             </label>
             <br><br>

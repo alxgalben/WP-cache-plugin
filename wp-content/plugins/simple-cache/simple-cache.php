@@ -1,7 +1,7 @@
 <?php
 /*
-Plugin Name: WP cache plugin
-Description: Plugin care salvează paginile în format HTML in folderul mycache.
+Plugin Name: Plugin de Cache pentru WordPress
+Description: Plugin care salveaza paginile în format HTML in folderul mycache.
 Version: 1.0
 Author: [Alex Galben]
 */

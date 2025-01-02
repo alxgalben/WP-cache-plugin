@@ -17,89 +17,109 @@ Domain Path: /languages
 add_action('admin_menu', 'sc_add_admin_menu');
 function sc_add_admin_menu() {
     add_menu_page(
-        'Simple Cache Settings',
         'Cache Settings',
+        'Cache',
         'manage_options',
         'simple-cache',
-        'sc_admin_page',
-        'dashicons-performance',
-        80
+        'sc_admin_page'
     );
 }
 
-// Pagina de administrare
 function sc_admin_page() {
-    // Salvează setările dacă formularul a fost trimis
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        // Salvarea setărilor
         update_option('sc_cache_enabled', isset($_POST['cache_enabled']) ? 1 : 0);
 
-        // Salvare excepții
-        if (isset($_POST['exceptions'])) {
-            $exceptions = array_filter(array_map('sanitize_text_field', explode("\n", trim($_POST['exceptions']))));
+        // Gestionarea excepțiilor
+        if (isset($_POST['exceptions']) && is_array($_POST['exceptions'])) {
+            $exceptions = array_map('sanitize_text_field', $_POST['exceptions']);
             update_option('sc_cache_exceptions', $exceptions);
         }
 
-        // Salvare durate
+        // Gestionarea duratelor
         if (isset($_POST['durations'])) {
             update_option('sc_cache_durations', sc_parse_durations($_POST['durations']));
         }
     }
 
-    // Obține setările existente
-    $enabled = get_option('sc_cache_enabled', 0);
-    $exceptions = implode("\n", get_option('sc_cache_exceptions', []));
+    // Obține setările salvate
+    $enabled = get_option('sc_cache_enabled', 1);
+    $exceptions = get_option('sc_cache_exceptions', []);
     $durations = sc_format_durations(get_option('sc_cache_durations', []));
 
     ?>
     <div class="wrap">
-        <h1>Simple Cache Settings</h1>
+        <h1>Cache Settings</h1>
         <form method="POST">
-            <!-- Activare/Dezactivare Cache -->
-            <h2>Global Settings</h2>
+            <!-- Activare cache -->
             <label>
                 <input type="checkbox" name="cache_enabled" <?php checked($enabled, 1); ?>>
                 Enable Cache
             </label>
-            <p>Toggle the cache functionality globally.</p>
+            <br><br>
 
             <!-- Excepții -->
-            <h2>Cache Exceptions</h2>
-            <p>Exclude specific pages or URLs from caching. Add one exception per line.</p>
-            <textarea name="exceptions" rows="5" style="width: 100%;"><?php echo esc_textarea($exceptions); ?></textarea>
+            <h2>Exceptions</h2>
+            <div id="exception-list">
+                <ul>
+                    <?php foreach ($exceptions as $exception): ?>
+                        <li>
+                            <input type="text" name="exceptions[]" value="<?php echo esc_attr($exception); ?>" />
+                            <button type="button" class="remove-exception button">Remove</button>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+            <button type="button" id="add-exception" class="button">Add New Exception</button>
+            <br><br>
 
             <!-- Durate personalizate -->
             <h2>Cache Durations</h2>
-            <p>Set custom cache durations for specific URL patterns (e.g., `blog:600` for 10 minutes). One rule per line.</p>
-            <textarea name="durations" rows="5" style="width: 100%;"><?php echo esc_textarea($durations); ?></textarea>
+            <label>Set custom durations (e.g., `blog:600,checkout:0`):</label>
+            <input type="text" name="durations" value="<?php echo esc_attr($durations); ?>">
+            <br><br>
 
-            <!-- Buton Salvare -->
-            <p>
-                <button type="submit" class="button button-primary">Save Settings</button>
-            </p>
+            <!-- Salvare -->
+            <button type="submit" class="button button-primary">Save Settings</button>
         </form>
     </div>
+
+    <!-- JavaScript pentru interactivitate -->
+    <script>
+        document.getElementById('add-exception').addEventListener('click', function() {
+            const ul = document.querySelector('#exception-list ul');
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <input type="text" name="exceptions[]" value="" />
+                <button type="button" class="remove-exception button">Remove</button>
+            `;
+            ul.appendChild(li);
+        });
+
+        document.getElementById('exception-list').addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove-exception')) {
+                e.target.parentElement.remove();
+            }
+        });
+    </script>
     <?php
 }
 
-// Funcție pentru a parsa durata
 function sc_parse_durations($input) {
     $durations = [];
-    $lines = array_filter(array_map('trim', explode("\n", $input)));
-    foreach ($lines as $line) {
-        $parts = explode(':', $line);
-        if (count($parts) === 2) {
-            $durations[trim($parts[0])] = (int) trim($parts[1]);
-        }
+    $pairs = explode(',', $input);
+    foreach ($pairs as $pair) {
+        list($keyword, $seconds) = explode(':', $pair);
+        $durations[trim($keyword)] = (int) trim($seconds);
     }
     return $durations;
 }
 
-// Funcție pentru a formata durata pentru afișare
 function sc_format_durations($durations) {
     $formatted = [];
-    foreach ($durations as $pattern => $seconds) {
-        $formatted[] = "$pattern:$seconds";
+    foreach ($durations as $keyword => $seconds) {
+        $formatted[] = "$keyword:$seconds";
     }
-    return implode("\n", $formatted);
+    return implode(',', $formatted);
 }
 ?>

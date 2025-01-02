@@ -1,5 +1,18 @@
 <?php
 
+/*
+Plugin Name: Simple Cache
+Plugin URI: https://example.com/simple-cache
+Description: A lightweight WordPress plugin for caching pages with custom exceptions and durations.
+Version: 1.0.0
+Author: Alex Galben
+Author URI: https://example.com
+License: GPL2
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: simple-cache
+Domain Path: /languages
+*/
+
 // Adaugă meniul de administrare
 add_action('admin_menu', 'sc_add_admin_menu');
 function sc_add_admin_menu() {
